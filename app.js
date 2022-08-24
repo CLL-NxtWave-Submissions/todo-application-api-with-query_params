@@ -231,4 +231,89 @@ app.post("/todos", async (req, res) => {
   res.send("Todo Successfully Added");
 });
 
+/*
+    Function Name         : generateSetColumnsPartOfUpdateAndSuccessMsg
+    Input Parameters      :
+      - dataForTodoUpdate : Data in request body for todo item update
+    Return Value          : Object with SET column values part of
+                            update sql, as a string and update success
+                            message
+    -------------------------------------------------------------------
+    Description: To generate the SET part of sql query
+                 to update specific todo item, as a string
+                 and also the update success message based
+                 on the column being updated.
+*/
+const generateSetColumnsPartOfUpdateAndSuccessMsg = (dataForTodoUpdate) => {
+  const { todo, priority, status, category, dueDate } = dataForTodoUpdate;
+
+  const arrOfSetColumnValuesStringPartsForUpdateSql = [];
+  let updateSuccessMessage = "";
+
+  if (todo !== undefined) {
+    arrOfSetColumnValuesStringPartsForUpdateSql.push(`todo = '${todo}'`);
+    updateSuccessMessage = "Todo Updated";
+  }
+
+  if (priority !== undefined) {
+    arrOfSetColumnValuesStringPartsForUpdateSql.push(
+      `priority = '${priority}'`
+    );
+    updateSuccessMessage = "Priority Updated";
+  }
+
+  if (status !== undefined) {
+    arrOfSetColumnValuesStringPartsForUpdateSql.push(`status = '${status}'`);
+    updateSuccessMessage = "Status Updated";
+  }
+
+  if (category !== undefined) {
+    arrOfSetColumnValuesStringPartsForUpdateSql.push(
+      `category = '${category}'`
+    );
+    updateSuccessMessage = "Category Updated";
+  }
+
+  if (dueDate !== undefined) {
+    arrOfSetColumnValuesStringPartsForUpdateSql.push(`due_date = '${dueDate}'`);
+    updateSuccessMessage = "Due Date Updated";
+  }
+
+  const setColumnValuesString = arrOfSetColumnValuesStringPartsForUpdateSql.join(
+    ","
+  );
+
+  return {
+    setColumnsValuesStringForUpdateSql: setColumnValuesString,
+    todoItemUpdateSuccessMessage: updateSuccessMessage,
+  };
+};
+
+/*
+    End-Point 5: PUT /todos/:todoId
+    ------------
+    To update specific todo item
+    with id: todoId
+*/
+app.put("/todos/:todoId", async (req, res) => {
+  const { todoId } = req.params;
+  const setSqlStringAndSuccessMsg = generateSetColumnsPartOfUpdateAndSuccessMsg(
+    req.body
+  );
+
+  const queryToUpdateSpecificTodoItem = `
+    UPDATE 
+        todo
+    SET
+        ${setSqlStringAndSuccessMsg.setColumnsValuesStringForUpdateSql}
+    WHERE
+        id = ${todoId};
+    `;
+
+  console.log(queryToUpdateSpecificTodoItem);
+
+  await todoAppDBConnectionObj.run(queryToUpdateSpecificTodoItem);
+  res.send(setSqlStringAndSuccessMsg.todoItemUpdateSuccessMessage);
+});
+
 module.exports = app;
