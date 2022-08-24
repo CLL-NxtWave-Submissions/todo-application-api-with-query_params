@@ -202,7 +202,7 @@ app.get("/agenda", async (req, res) => {
             due_date = '${formattedDueDateString}';
         `;
 
-    console.log(queryToFetchAgendaForSpecificDueDate);
+    // console.log(queryToFetchAgendaForSpecificDueDate);
     const agendaForRequestedDueDate = await todoAppDBConnectionObj.all(
       queryToFetchAgendaForSpecificDueDate
     );
@@ -218,17 +218,37 @@ app.get("/agenda", async (req, res) => {
 */
 app.post("/todos", async (req, res) => {
   const { id, todo, priority, status, category, dueDate } = req.body;
-  const queryToAddNewTodoItem = `
+  const validityCheckResult = checkQueryParametersValidity({
+    priority,
+    status,
+    category,
+  });
+
+  if (validityCheckResult.isSuccess) {
+    const requestedDueDate = new Date(dueDate);
+    const requestedDueDateString = requestedDueDate.toString();
+
+    if (requestedDueDateString === "Invalid Date") {
+      res.status(400);
+      res.send("Invalid Due Date");
+    } else {
+      const formattedDueDateString = format(requestedDueDate, "yyyy-MM-dd");
+      const queryToAddNewTodoItem = `
         INSERT INTO
             todo (id, todo, priority, status, category, due_date)
         VALUES
-            (${id}, '${todo}', '${priority}', '${status}', '${category}', '${dueDate}');
+            (${id}, '${todo}', '${priority}', '${status}', '${category}', '${formattedDueDateString}');
     `;
 
-  const addNewTodoItemDBResponse = await todoAppDBConnectionObj.run(
-    queryToAddNewTodoItem
-  );
-  res.send("Todo Successfully Added");
+      const addNewTodoItemDBResponse = await todoAppDBConnectionObj.run(
+        queryToAddNewTodoItem
+      );
+      res.send("Todo Successfully Added");
+    }
+  } else {
+    res.status(400);
+    res.send(validityCheckResult.checkFailedMessage);
+  }
 });
 
 /*
