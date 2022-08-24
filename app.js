@@ -74,19 +74,22 @@ const checkQueryParametersValidity = (queryParameterValues) => {
 
   const { priority, status, category } = queryParameterValues;
   if (
-    (priority !== undefined || priority !== "") &&
+    priority !== undefined &&
+    priority !== "" &&
     !isValidValue(validTodoItemPriorityValues, priority)
   ) {
     validityCheckResult.isSuccess = false;
     validityCheckResult.checkFailedMessage = "Invalid Todo Priority";
   } else if (
-    (status !== undefined || status !== "") &&
+    status !== undefined &&
+    status !== "" &&
     !isValidValue(validTodoItemStatusValues, status)
   ) {
     validityCheckResult.isSuccess = false;
     validityCheckResult.checkFailedMessage = "Invalid Todo Status";
   } else if (
-    (category !== undefined || category !== "") &&
+    category !== undefined &&
+    category !== "" &&
     !isValidValue(validTodoItemCategoryValues, category)
   ) {
     validityCheckResult.isSuccess = false;
@@ -321,11 +324,21 @@ const generateSetColumnsPartOfUpdateAndSuccessMsg = (dataForTodoUpdate) => {
 app.put("/todos/:todoId", async (req, res) => {
   const { todoId } = req.params;
 
-  const setSqlStringAndSuccessMsg = generateSetColumnsPartOfUpdateAndSuccessMsg(
-    req.body
-  );
+  const validityCheckResult = checkQueryParametersValidity(req.body);
+  if (validityCheckResult.isSuccess) {
+    const { dueDate } = req.body;
+    if (dueDate !== undefined) {
+      const requestedDueDate = new Date(dueDate);
+      const requestedDueDateString = requestedDueDate.toString();
+      if (requestedDueDateString === "Invalid Date") {
+        res.status(400);
+        res.send("Invalid Due Date");
+      } else {
+        const setSqlStringAndSuccessMsg = generateSetColumnsPartOfUpdateAndSuccessMsg(
+          req.body
+        );
 
-  const queryToUpdateSpecificTodoItem = `
+        const queryToUpdateSpecificTodoItem = `
     UPDATE 
         todo
     SET
@@ -334,10 +347,16 @@ app.put("/todos/:todoId", async (req, res) => {
         id = ${todoId};
     `;
 
-  console.log(queryToUpdateSpecificTodoItem);
+        //   console.log(queryToUpdateSpecificTodoItem);
 
-  await todoAppDBConnectionObj.run(queryToUpdateSpecificTodoItem);
-  res.send(setSqlStringAndSuccessMsg.todoItemUpdateSuccessMessage);
+        await todoAppDBConnectionObj.run(queryToUpdateSpecificTodoItem);
+        res.send(setSqlStringAndSuccessMsg.todoItemUpdateSuccessMessage);
+      }
+    }
+  } else {
+    res.status(400);
+    res.send(validityCheckResult.checkFailedMessage);
+  }
 });
 
 /*
