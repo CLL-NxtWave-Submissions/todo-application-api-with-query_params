@@ -73,17 +73,20 @@ const checkQueryParametersValidity = (queryParameterValues) => {
   };
 
   const { priority, status, category } = queryParameterValues;
-  if (priority !== "" && !isValidValue(validTodoItemPriorityValues, priority)) {
+  if (
+    (priority !== undefined || priority !== "") &&
+    !isValidValue(validTodoItemPriorityValues, priority)
+  ) {
     validityCheckResult.isSuccess = false;
     validityCheckResult.checkFailedMessage = "Invalid Todo Priority";
   } else if (
-    status !== "" &&
+    (status !== undefined || status !== "") &&
     !isValidValue(validTodoItemStatusValues, status)
   ) {
     validityCheckResult.isSuccess = false;
     validityCheckResult.checkFailedMessage = "Invalid Todo Status";
   } else if (
-    category !== "" &&
+    (category !== undefined || category !== "") &&
     !isValidValue(validTodoItemCategoryValues, category)
   ) {
     validityCheckResult.isSuccess = false;
@@ -317,6 +320,7 @@ const generateSetColumnsPartOfUpdateAndSuccessMsg = (dataForTodoUpdate) => {
 */
 app.put("/todos/:todoId", async (req, res) => {
   const { todoId } = req.params;
+
   const setSqlStringAndSuccessMsg = generateSetColumnsPartOfUpdateAndSuccessMsg(
     req.body
   );
