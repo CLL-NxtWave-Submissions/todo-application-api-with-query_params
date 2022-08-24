@@ -316,4 +316,21 @@ app.put("/todos/:todoId", async (req, res) => {
   res.send(setSqlStringAndSuccessMsg.todoItemUpdateSuccessMessage);
 });
 
+/*
+    End-Point 6: DELETE /todos/:todoId
+    ------------
+    To delete specific todo item from
+    the todo table with id: todoId
+*/
+app.delete("/todos/:todoId", async (req, res) => {
+  const { todoId } = req.params;
+  const queryToDeleteSpecificTodoItem = `
+        DELETE FROM todo
+        WHERE id = ${todoId};
+    `;
+
+  await todoAppDBConnectionObj.run(queryToDeleteSpecificTodoItem);
+  res.send("Todo Deleted");
+});
+
 module.exports = app;
