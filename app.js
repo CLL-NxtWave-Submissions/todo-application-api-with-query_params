@@ -2,6 +2,7 @@ const express = require("express");
 const { open } = require("sqlite");
 const sqlite3 = require("sqlite3");
 const path = require("path");
+const { format } = require("date-fns");
 
 const app = express();
 app.use(express.json());
@@ -140,4 +141,94 @@ app.get("/todos", async (req, res) => {
     res.send(filteredTodoItemData);
   }
 });
+
+/*
+    End-Point 2: GET /todos/:todoId
+    ------------
+    To get specific todo item data
+    with id: todoId
+*/
+app.get("/todos/:todoId", async (req, res) => {
+  const { todoId } = req.params;
+  const queryToFetchSpecificTodoItem = `
+    SELECT
+        *
+    FROM
+        todo
+    WHERE
+        id = ${todoId};
+    `;
+
+  const specificTodoItemData = await todoAppDBConnectionObj.get(
+    queryToFetchSpecificTodoItem
+  );
+  const processedSpecificTodoItemData = {
+    id: specificTodoItemData.id,
+    todo: specificTodoItemData.todo,
+    priority: specificTodoItemData.priority,
+    status: specificTodoItemData.status,
+    category: specificTodoItemData.category,
+    dueDate: specificTodoItemData.due_date,
+  };
+
+  res.send(processedSpecificTodoItemData);
+});
+
+/*
+    End-Point 3     : GET /agenda
+    Query Parameter : date
+    -----------------
+    To get all todo items with 
+    due date matching the value
+    in the query parameter: date
+*/
+app.get("/agenda", async (req, res) => {
+  const { date } = req.query;
+
+  const requestedDueDate = new Date(date);
+  const requestedDueDateAsString = requestedDueDate.toString();
+  if (requestedDueDateAsString === "Invalid Date") {
+    res.status(400);
+    res.send("Invalid Due Date");
+  } else {
+    // Valid due date
+    const formattedDueDateString = format(requestedDueDate, "yyyy-MM-dd");
+    const queryToFetchAgendaForSpecificDueDate = `
+        SELECT
+            *
+        FROM
+            todo
+        WHERE
+            due_date = '${formattedDueDateString}';
+        `;
+
+    console.log(queryToFetchAgendaForSpecificDueDate);
+    const agendaForRequestedDueDate = await todoAppDBConnectionObj.all(
+      queryToFetchAgendaForSpecificDueDate
+    );
+    res.send(agendaForRequestedDueDate);
+  }
+});
+
+/*
+    End-Point 4: POST /todos
+    ------------
+    To add new todo item
+    to the todo table
+*/
+app.post("/todos", async (req, res) => {
+  const { id, todo, priority, status, category, dueDate } = req.body;
+  const queryToAddNewTodoItem = `
+        INSERT INTO
+            todo (id, todo, priority, status, category, due_date)
+        VALUES
+            (${id}, '${todo}', '${priority}', '${status}', '${category}', '${dueDate}');
+    `;
+
+  const addNewTodoItemDBResponse = await todoAppDBConnectionObj.run(
+    queryToAddNewTodoItem
+  );
+  res.send("Todo Successfully Added");
+});
+
 module.exports = app;
