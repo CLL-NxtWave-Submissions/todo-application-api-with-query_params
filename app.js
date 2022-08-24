@@ -144,7 +144,18 @@ app.get("/todos", async (req, res) => {
     const filteredTodoItemData = await todoAppDBConnectionObj.all(
       queryToFilterAndFetchTodoData
     );
-    res.send(filteredTodoItemData);
+    const processedFilteredTodoItemData = filteredTodoItemData.map(
+      (currentTodoItemData) => ({
+        id: currentTodoItemData.id,
+        todo: currentTodoItemData.todo,
+        priority: currentTodoItemData.priority,
+        status: currentTodoItemData.status,
+        category: currentTodoItemData.category,
+        dueDate: currentTodoItemData.due_date,
+      })
+    );
+
+    res.send(processedFilteredTodoItemData);
   }
 });
 
