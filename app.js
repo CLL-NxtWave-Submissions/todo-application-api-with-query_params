@@ -219,11 +219,21 @@ app.get("/agenda", async (req, res) => {
             due_date = '${formattedDueDateString}';
         `;
 
-    // console.log(queryToFetchAgendaForSpecificDueDate);
     const agendaForRequestedDueDate = await todoAppDBConnectionObj.all(
       queryToFetchAgendaForSpecificDueDate
     );
-    res.send(agendaForRequestedDueDate);
+    const processedAgendaDataForRequestedDueDate = agendaForRequestedDueDate.map(
+      (currentAgendaItem) => ({
+        id: currentAgendaItem.id,
+        todo: currentAgendaItem.todo,
+        priority: currentAgendaItem.priority,
+        status: currentAgendaItem.status,
+        category: currentAgendaItem.category,
+        dueDate: currentAgendaItem.due_date,
+      })
+    );
+
+    res.send(processedAgendaDataForRequestedDueDate);
   }
 });
 
